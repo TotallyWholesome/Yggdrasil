@@ -180,6 +180,28 @@ namespace Yggdrasil.Configuration
 
 			return defaultValue;
 		}
+		
+		/// <summary>
+		/// Returns the option as long, or the default value if the option
+		/// doesn't exist or is invalid.
+		/// </summary>
+		/// <param name="option"></param>
+		/// <param name="defaultValue"></param>
+		/// <returns></returns>
+		public ulong GetULong(string option, ulong defaultValue = 0)
+		{
+			string value;
+			lock (_options)
+			{
+				if (!_options.TryGetValue(option, out value))
+					return defaultValue;
+			}
+
+			if (ulong.TryParse(value, out var ret))
+				return ret;
+
+			return defaultValue;
+		}
 
 		/// <summary>
 		/// Returns the option as string, or the default value if the option
