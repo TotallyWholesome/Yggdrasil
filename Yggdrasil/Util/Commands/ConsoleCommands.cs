@@ -64,31 +64,39 @@ namespace Yggdrasil.Util.Commands
 
 			while (true)
 			{
-				var line = Console.ReadLine();
+				try
+				{
+					var line = Console.ReadLine();
 
-				var args = new Arguments(line);
-				if (args.Count == 0)
-					continue;
+					var args = new Arguments(line);
+					if (args.Count == 0)
+						continue;
 
-				var command = this.GetCommand(args.Get(0));
-				if (command == null)
-				{
-					Log.Info("Unknown command '{0}'", args.Get(0));
-					continue;
-				}
+					var command = this.GetCommand(args.Get(0));
+					if (command == null)
+					{
+						Log.Info("Unknown command '{0}'", args.Get(0));
+						continue;
+					}
 
-				var result = command.Func(line, args);
-				if (result == CommandResult.Break)
-				{
-					break;
+					var result = command.Func(line, args);
+					if (result == CommandResult.Break)
+					{
+						break;
+					}
+					else if (result == CommandResult.Fail)
+					{
+						Log.Error("Failed to run command '{0}'.", command.Name);
+					}
+					else if (result == CommandResult.InvalidArgument)
+					{
+						Log.Info("Usage: {0} {1}", command.Name, command.Usage);
+					}
 				}
-				else if (result == CommandResult.Fail)
+				catch (Exception e)
 				{
-					Log.Error("Failed to run command '{0}'.", command.Name);
-				}
-				else if (result == CommandResult.InvalidArgument)
-				{
-					Log.Info("Usage: {0} {1}", command.Name, command.Usage);
+					Log.Error("An error occured while attempting to process a command!");
+					Log.Error(e);
 				}
 			}
 		}
