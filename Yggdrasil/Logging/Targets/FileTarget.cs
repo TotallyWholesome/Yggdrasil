@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace Yggdrasil.Logging.Targets
 {
@@ -17,6 +18,8 @@ namespace Yggdrasil.Logging.Targets
 		/// The path to the log file.
 		/// </summary>
 		public string FilePath { get; private set; }
+
+		private DateTime _logStartTime;
 
 		/// <summary>
 		/// Creates new instance, with the file going into the given folder.
@@ -37,18 +40,41 @@ namespace Yggdrasil.Logging.Targets
 		/// <param name="messageClean"></param>
 		public override void Write(LogLevel level, string message, string messageRaw, string messageClean)
 		{
+			var time = DateTime.Now;
+
+			//Every 24 hours generate a new log file
+			if (this.FilePath != null && time.Subtract(this._logStartTime).TotalHours >= 24)
+				this.FilePath = null;
+			
 			if (this.FilePath == null)
 			{
-				this.FilePath = Path.Combine(this.FolderPath, this.Logger.Name + ".txt");
+				this._logStartTime = time;
+
+				this.FilePath = Path.Combine(this.FolderPath, $"{this.Logger.Name}_{this._logStartTime:MM.dd.yyyy-HH.mm}_.txt");
 
 				if (File.Exists(this.FilePath))
 					File.Delete(this.FilePath);
 
 				if (!Directory.Exists(this.FolderPath))
+				{
 					Directory.CreateDirectory(this.FolderPath);
+				}
+				else
+				{
+					//Check for log clean
+					var logs = new DirectoryInfo(this.FolderPath).GetFiles();
+					
+					if (logs.Length > 15)
+					{
+						foreach (var file in logs.OrderByDescending(x => x.LastWriteTime).Skip(15))
+						{
+							file.Delete();
+						}
+					}
+				}
 			}
 
-			messageClean = string.Format("{0:yyyy-MM-dd HH:mm:ss.fff} {1}", DateTime.Now, messageClean);
+			messageClean = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {messageClean}";
 
 			File.AppendAllText(this.FilePath, messageClean);
 		}
