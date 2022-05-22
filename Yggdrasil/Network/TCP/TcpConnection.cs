@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using Yggdrasil.Logging;
 
 namespace Yggdrasil.Network.TCP
 {
@@ -179,8 +180,62 @@ namespace Yggdrasil.Network.TCP
 		/// <param name="data"></param>
 		public virtual void Send(byte[] data)
 		{
-			if (this.Status == ConnectionStatus.Open)
-				_socket.Send(data);
+			if (this.Status != ConnectionStatus.Open) return;
+			
+			try
+			{
+				this._socket.BeginSend(data, 0, data.Length, SocketFlags.None, this.EndSendCallback, null);
+			}
+			catch (SocketException se)
+			{
+				switch (se.SocketErrorCode)
+				{
+					case SocketError.OperationAborted:
+					case SocketError.ConnectionReset:
+						this.OnClosed(ConnectionCloseType.Lost);
+						Log.Error($"Connection {this.Address} was reset ({se.SocketErrorCode})");
+						break;
+					default:
+						Log.Error(
+							$"An unknown error occured with connection {this.Address} : {se.SocketErrorCode}");
+						break;
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Error("An unknown error occured during EndSendCallback!");
+				Log.Error(e);
+			}
+		}
+
+		private void EndSendCallback(IAsyncResult result)
+		{
+			try
+			{
+				var bytesSent = this._socket.EndSend(result);
+				if (bytesSent == 0)
+					Log.Error($"0 bytes were sent to connection {Address}");
+			}
+			catch (SocketException se)
+			{
+				switch (se.SocketErrorCode)
+				{
+					case SocketError.OperationAborted:
+					case SocketError.ConnectionReset:
+						this.OnClosed(ConnectionCloseType.Lost);
+						Log.Error($"Connection {this.Address} was reset ({se.SocketErrorCode})");
+						break;
+					default:
+						Log.Error(
+							$"An unknown error occured with connection {this.Address} : {se.SocketErrorCode}");
+						break;
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Error("An unknown error occured during EndSendCallback!");
+				Log.Error(e);
+			}
 		}
 	}
 
