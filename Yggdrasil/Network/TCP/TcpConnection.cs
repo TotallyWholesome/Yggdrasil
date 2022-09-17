@@ -10,7 +10,7 @@ namespace Yggdrasil.Network.TCP
 	/// </summary>
 	public abstract class TcpConnection
 	{
-		private const int BufferMaxSize = 4 * 1024;
+		private const int BufferMaxSize = 8 * 1024;
 
 		private byte[] _buffer;
 		private Socket _socket;
