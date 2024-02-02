@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Yggdrasil.Network.TCP
 {
@@ -257,6 +258,16 @@ namespace Yggdrasil.Network.TCP
 		{
 			if (this.Status == ClientStatus.Connected)
 				_socket.Send(data);
+		}
+		
+		/// <summary>
+		/// Sends data via socket.
+		/// </summary>
+		/// <param name="data"></param>
+		public virtual async Task SendAsync(ArraySegment<byte> data)
+		{
+			if (this.Status == ClientStatus.Connected)
+				await _socket.SendAsync(data, SocketFlags.None);
 		}
 	}
 

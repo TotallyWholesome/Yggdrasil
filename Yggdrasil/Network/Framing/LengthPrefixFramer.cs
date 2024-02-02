@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Yggdrasil.Network.Framing
 {
@@ -57,6 +58,22 @@ namespace Yggdrasil.Network.Framing
 			Buffer.BlockCopy(message, 0, result, 4, messageLength);
 
 			return result;
+		}
+		
+		/// <summary>
+		/// Wraps message in length prefixed frame.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <returns></returns>
+		public ArraySegment<byte> FrameNoAlloc(MemoryStream message)
+		{
+			var messageLength = message.Length;
+			if (messageLength > this.MaxMessageSize)
+				throw new InvalidMessageSizeException("Invalid size (" + messageLength + ").");
+			
+			var dataLength = sizeof(int) + message.Length;
+			message.Write(BitConverter.GetBytes((int)dataLength), 0, 4); 
+			return message.TryGetBuffer(out var buffer ) ? buffer : throw new Exception("Failed to get array segment buffer for network frame");
 		}
 
 		/// <summary>
