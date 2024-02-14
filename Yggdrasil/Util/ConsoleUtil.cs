@@ -110,17 +110,6 @@ namespace Yggdrasil.Util
 		}
 
 		/// <summary>
-		/// Returns whether the application runs with admin rights.
-		/// </summary>
-		public static bool CheckAdmin()
-		{
-			var id = WindowsIdentity.GetCurrent();
-			var principal = new WindowsPrincipal(id);
-
-			return principal.IsInRole(WindowsBuiltInRole.Administrator);
-		}
-
-		/// <summary>
 		/// Returns whether the application is running on Mono.
 		/// </summary>
 		public static bool CheckMono()
