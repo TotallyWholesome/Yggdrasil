@@ -71,8 +71,8 @@ namespace Yggdrasil.Network.Framing
 			if (messageLength > this.MaxMessageSize)
 				throw new InvalidMessageSizeException("Invalid size (" + messageLength + ").");
 			
-			var dataLength = sizeof(int) + message.Length;
-			message.Write(BitConverter.GetBytes((int)dataLength), 0, 4); 
+			message.Position = 0;
+			message.Write(BitConverter.GetBytes((int)messageLength), 0, 4);
 			return message.TryGetBuffer(out var buffer ) ? buffer : throw new Exception("Failed to get array segment buffer for network frame");
 		}
 
