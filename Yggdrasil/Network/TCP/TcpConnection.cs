@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Yggdrasil.Logging;
 
 namespace Yggdrasil.Network.TCP
@@ -185,6 +186,40 @@ namespace Yggdrasil.Network.TCP
 			try
 			{
 				this._socket.BeginSend(data, 0, data.Length, SocketFlags.None, this.EndSendCallback, null);
+			}
+			catch (SocketException se)
+			{
+				switch (se.SocketErrorCode)
+				{
+					case SocketError.OperationAborted:
+					case SocketError.ConnectionReset:
+						this.OnClosed(ConnectionCloseType.Lost);
+						Log.Error($"Connection {this.Address} was reset ({se.SocketErrorCode})");
+						break;
+					default:
+						Log.Error(
+							$"An unknown error occured with connection {this.Address} : {se.SocketErrorCode}");
+						break;
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Error("An unknown error occured during EndSendCallback!");
+				Log.Error(e);
+			}
+		}
+
+		/// <summary>
+		/// Sends data via socket.
+		/// </summary>
+		/// <param name="data"></param>
+		public virtual async Task SendAsync(ArraySegment<byte> data)
+		{
+			if (this.Status != ConnectionStatus.Open) return;
+
+			try
+			{
+				await _socket.SendAsync(data, SocketFlags.None);
 			}
 			catch (SocketException se)
 			{
